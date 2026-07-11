@@ -152,10 +152,10 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV}`);
 
-  // Start the scheduled-notifications processor
-  try {
-    require('./services/notificationScheduler').start();
-  } catch (err) {
-    console.error('Failed to start notification scheduler:', err.message);
-  }
+  // Start the scheduled-notifications processor (disabled for TiDB Cloud SSL issue)
+  // try {
+  //   require('./services/notificationScheduler').start();
+  // } catch (err) {
+  //   console.error('Failed to start notification scheduler:', err.message);
+  // }
 });
