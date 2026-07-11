@@ -1,0 +1,7 @@
+Database connected successfully
+appointment_id | int(11)
+driver_id | int(11)
+appointment_type | enum('Theory Test','Practical Test','License Collection','Renewal')
+appointment_date | datetime
+center_name | varchar(255)
+status | enum('Pending','Approved','Cancelled','Completed')

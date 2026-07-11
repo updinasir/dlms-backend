@@ -1,0 +1,70 @@
+Database connected successfully
+
+=== drivers ===
+  driver_id | int(11) | NOT NULL, PRIMARY KEY
+  national_id | varchar(50) | NOT NULL, UNIQUE
+  first_name | varchar(50) | 
+  last_name | varchar(50) | 
+  gender | enum('Male','Female') | 
+  date_of_birth | date | 
+  phone | varchar(20) | 
+  email | varchar(100) | 
+  address | text | 
+  city | varchar(100) | 
+  blood_group | varchar(10) | 
+  emergency_contact | varchar(20) | 
+  photo | varchar(255) | 
+  fingerprint_data | text | 
+  registration_date | timestamp | NOT NULL
+  status | enum('Pending','Approved','Rejected') | 
+
+=== licenses ===
+  license_id | int(11) | NOT NULL, PRIMARY KEY
+  driver_id | int(11) | INDEX
+  category_id | int(11) | INDEX
+  license_number | varchar(100) | UNIQUE
+  issue_date | date | 
+  expiry_date | date | 
+  qr_code | varchar(255) | 
+  license_status | enum('Pending','Active','Expired','Suspended','Revoked') | 
+
+=== practical_exams ===
+  practical_exam_id | int(11) | NOT NULL, PRIMARY KEY
+  driver_id | int(11) | INDEX
+  examiner_id | int(11) | INDEX
+  exam_date | date | 
+  vehicle_used | varchar(100) | 
+  score | decimal(5,2) | 
+  result | enum('Pass','Fail') | 
+  remarks | text | 
+
+=== theory_exams ===
+  theory_exam_id | int(11) | NOT NULL, PRIMARY KEY
+  driver_id | int(11) | INDEX
+  exam_date | date | 
+  score | decimal(5,2) | 
+  total_marks | decimal(5,2) | 
+  result | enum('Pass','Fail') | 
+  remarks | text | 
+
+=== payments ===
+  payment_id | int(11) | NOT NULL, PRIMARY KEY
+  driver_id | int(11) | INDEX
+  payment_type | enum('Registration','Test','License','Renewal','Fine') | 
+  amount | decimal(10,2) | 
+  payment_method | enum('Cash','EVC Plus','Zaad','Sahal','Card') | 
+  transaction_reference | varchar(255) | 
+  payment_date | timestamp | NOT NULL
+  payment_status | enum('Pending','Completed','Failed') | 
+
+=== traffic_violations ===
+  violation_id | int(11) | NOT NULL, PRIMARY KEY
+  driver_id | int(11) | INDEX
+  police_officer_id | int(11) | INDEX
+  violation_type | varchar(255) | 
+  description | text | 
+  fine_amount | decimal(10,2) | 
+  violation_date | datetime | 
+  location | varchar(255) | 
+  evidence_photo | varchar(255) | 
+  status | enum('Unpaid','Paid') | 
