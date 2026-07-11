@@ -1,7 +1,7 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-// Create connection pool
+// Create connection pool with SSL for TiDB Cloud
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
@@ -13,7 +13,8 @@ const pool = mysql.createPool({
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
   ssl: {
-    rejectUnauthorized: false
+    minVersion: 'TLSv1.2',
+    rejectUnauthorized: true
   }
 });
 
