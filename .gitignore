@@ -6,3 +6,5 @@ uploads/
 coverage/
 .vscode/
 .idea/
+*.sql
+dlms_dump.sql
