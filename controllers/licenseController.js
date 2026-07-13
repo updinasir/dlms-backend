@@ -57,6 +57,17 @@ const getAllLicenses = async (req, res) => {
   }
 };
 
+// Preview the next auto-generated license number (does not reserve it)
+const getNextLicenseNumber = async (req, res) => {
+  try {
+    const licenseNumber = await generateLicenseNumber();
+    res.json({ license_number: licenseNumber });
+  } catch (error) {
+    console.error('Get next license number error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Get license by ID
 const getLicenseById = async (req, res) => {
   try {
@@ -772,5 +783,6 @@ module.exports = {
   deleteLicenseCategory,
   checkDuplicateLicense,
   getDriverExamStatus,
+  getNextLicenseNumber,
   exportLicenses
 };

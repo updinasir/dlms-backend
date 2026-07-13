@@ -42,6 +42,9 @@ router.delete('/license-categories/:id', auth, authorize('admin'), checkPermissi
 // Check for duplicate license number
 router.get('/check-duplicate', auth, checkPermission('licenses', 'view'), licenseController.checkDuplicateLicense);
 
+// Preview the next auto-generated license number
+router.get('/next-number', auth, checkPermission('licenses', 'view'), licenseController.getNextLicenseNumber);
+
 // Export licenses to CSV
 router.get('/export', auth, authorize('admin', 'staff'), checkPermission('licenses', 'view'), licenseController.exportLicenses);
 
