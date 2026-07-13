@@ -32,6 +32,8 @@ app.use(helmet({
 // CORS configuration
 const allowedOrigins = new Set([
   process.env.FRONTEND_URL,
+  'https://dlms-1zeza90go-updinasirmohamoud5-4227s-projects.vercel.app',
+  'https://dlms-git-main-updinasirmohamoud5-4227s-projects.vercel.app',
   'https://frontend-d8akdiskv-updinasirmohamoud5-4227s-projects.vercel.app',
   'https://frontend-kappa-snowy-63.vercel.app',
   'http://localhost:5173',
