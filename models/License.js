@@ -251,6 +251,7 @@ class License {
       expired: await countByStatus('Expired'),
       suspended: await countByStatus('Suspended'),
       revoked: await countByStatus('Revoked'),
+      pending: await countByStatus('Pending'),
       pendingPayment: await countByWorkflow('Pending Payment'),
       approved: await countByWorkflow('Approved'),
       printed: await countByWorkflow('Printed'),

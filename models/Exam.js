@@ -298,7 +298,7 @@ class Exam {
     const failed = pr_failed.count + th_failed.count;
     const pending = pr_pending.count + th_pending.count;
 
-    return { total, passed, failed, pending };
+    return { total, passed, failed, pending, scheduled: pending, completed: passed + failed };
   }
 }
 
