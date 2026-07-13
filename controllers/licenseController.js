@@ -330,6 +330,11 @@ const revokeLicense = async (req, res) => {
 
 const verifyLicensePayment = async (req, res) => {
   try {
+    const current = await License.findById(req.params.id);
+    if (!current) return res.status(404).json({ message: 'License not found' });
+    if (current.workflow_status !== 'Pending Payment') {
+      return res.status(400).json({ message: `Payment can only be verified when the license is in 'Pending Payment' status (current: ${current.workflow_status}).` });
+    }
     const license = await License.verifyPayment(req.params.id, req.user?.id);
     if (!license) return res.status(404).json({ message: 'License not found' });
 
@@ -374,6 +379,11 @@ const approveLicense = async (req, res) => {
 
 const printLicense = async (req, res) => {
   try {
+    const current = await License.findById(req.params.id);
+    if (!current) return res.status(404).json({ message: 'License not found' });
+    if (current.workflow_status !== 'Approved') {
+      return res.status(400).json({ message: `License can only be printed after payment is verified/approved (current: ${current.workflow_status}).` });
+    }
     const license = await License.printLicense(req.params.id, req.user?.id);
     if (!license) return res.status(404).json({ message: 'License not found' });
 
@@ -396,6 +406,11 @@ const printLicense = async (req, res) => {
 
 const markLicenseReadyForCollection = async (req, res) => {
   try {
+    const current = await License.findById(req.params.id);
+    if (!current) return res.status(404).json({ message: 'License not found' });
+    if (current.workflow_status !== 'Printed') {
+      return res.status(400).json({ message: `License must be printed before it can be marked ready for collection (current: ${current.workflow_status}).` });
+    }
     const license = await License.markReadyForCollection(req.params.id, req.user?.id);
     if (!license) return res.status(404).json({ message: 'License not found' });
 
@@ -418,6 +433,11 @@ const markLicenseReadyForCollection = async (req, res) => {
 
 const collectLicense = async (req, res) => {
   try {
+    const current = await License.findById(req.params.id);
+    if (!current) return res.status(404).json({ message: 'License not found' });
+    if (current.workflow_status !== 'Ready for Collection') {
+      return res.status(400).json({ message: `License must be ready for collection before it can be collected (current: ${current.workflow_status}).` });
+    }
     const license = await License.collectLicense(req.params.id, req.user?.id);
     if (!license) return res.status(404).json({ message: 'License not found' });
 
