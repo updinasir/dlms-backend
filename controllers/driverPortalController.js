@@ -8,9 +8,9 @@ const getMyPortalData = async (req, res) => {
       return res.status(400).json({ message: 'User email not found in token' });
     }
 
-    // Find driver by email
+    // Find driver by email (case-insensitive, whitespace tolerant)
     const [driverRows] = await pool.query(
-      'SELECT * FROM drivers WHERE email = ? LIMIT 1',
+      'SELECT * FROM drivers WHERE LOWER(TRIM(email)) = LOWER(TRIM(?)) LIMIT 1',
       [email]
     );
     if (!driverRows.length) {
@@ -19,8 +19,20 @@ const getMyPortalData = async (req, res) => {
     const driver = driverRows[0];
     const driverId = driver.driver_id;
 
+    // Each related dataset is loaded independently so a failure in one
+    // (e.g. a schema difference) cannot blank out the entire profile.
+    const safeQuery = async (sql, params) => {
+      try {
+        const [rows] = await pool.query(sql, params);
+        return rows;
+      } catch (err) {
+        console.error('Portal sub-query failed:', err.message);
+        return [];
+      }
+    };
+
     // License
-    const [licenseRows] = await pool.query(
+    const licenseRows = await safeQuery(
       `SELECT l.*, lc.category_name, lc.description
        FROM licenses l
        LEFT JOIN license_categories lc ON l.category_id = lc.category_id
@@ -32,7 +44,7 @@ const getMyPortalData = async (req, res) => {
     const license = licenseRows[0] || null;
 
     // Exams
-    const [examRows] = await pool.query(
+    const examRows = await safeQuery(
       `SELECT
         CONCAT('P-', pe.practical_exam_id) AS exam_uid,
         'practical' AS exam_type,
@@ -57,21 +69,21 @@ const getMyPortalData = async (req, res) => {
     );
 
     // Payments
-    const [paymentRows] = await pool.query(
+    const paymentRows = await safeQuery(
       `SELECT payment_id, payment_type, amount, payment_method, transaction_reference, payment_date, payment_status
        FROM payments WHERE driver_id = ? ORDER BY payment_date DESC`,
       [driverId]
     );
 
     // Appointments
-    const [appointmentRows] = await pool.query(
+    const appointmentRows = await safeQuery(
       `SELECT appointment_id, appointment_type, appointment_date, status, notes
        FROM appointments WHERE driver_id = ? ORDER BY appointment_date DESC`,
       [driverId]
     );
 
     // Documents
-    const [documentRows] = await pool.query(
+    const documentRows = await safeQuery(
       `SELECT document_id, document_type, file_path, uploaded_at
        FROM documents WHERE driver_id = ? ORDER BY uploaded_at DESC`,
       [driverId]
@@ -100,7 +112,7 @@ const getMyNotifications = async (req, res) => {
     }
 
     const [driverRows] = await pool.query(
-      'SELECT driver_id FROM drivers WHERE email = ? LIMIT 1',
+      'SELECT driver_id FROM drivers WHERE LOWER(TRIM(email)) = LOWER(TRIM(?)) LIMIT 1',
       [email]
     );
     if (!driverRows.length) {
@@ -136,7 +148,7 @@ const markMyNotificationRead = async (req, res) => {
     }
 
     const [driverRows] = await pool.query(
-      'SELECT driver_id FROM drivers WHERE email = ? LIMIT 1',
+      'SELECT driver_id FROM drivers WHERE LOWER(TRIM(email)) = LOWER(TRIM(?)) LIMIT 1',
       [email]
     );
     if (!driverRows.length) {
