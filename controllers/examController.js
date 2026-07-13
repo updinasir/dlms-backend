@@ -65,6 +65,21 @@ const scheduleExam = async (req, res) => {
       return res.status(400).json({ message: 'Invalid exam type. Must be theory or practical.' });
     }
 
+    // Government workflow gate: a driver must submit the required documents
+    // (National ID, Passport, Medical Certificate) before any exam can be scheduled.
+    const requiredDocs = ['National ID', 'Passport', 'Medical Certificate'];
+    const [docRows] = await pool.query(
+      'SELECT DISTINCT document_type FROM documents WHERE driver_id = ?',
+      [req.body.driver_id]
+    );
+    const submittedDocs = new Set(docRows.map((d) => d.document_type));
+    const missingDocs = requiredDocs.filter((d) => !submittedDocs.has(d));
+    if (missingDocs.length > 0) {
+      return res.status(400).json({
+        message: `Driver must submit the following document(s) before an exam can be scheduled: ${missingDocs.join(', ')}.`
+      });
+    }
+
     // Government workflow gate: a driver must pass the Theory Test before a Practical Test.
     if (examType === 'practical') {
       const theoryStats = await Exam.getAttemptStats(req.body.driver_id, 'theory');
