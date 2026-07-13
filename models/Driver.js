@@ -152,15 +152,15 @@ class Driver {
     const base = drvSoft ? 'WHERE deleted_at IS NULL' : '';
     const mid = drvSoft ? ' AND deleted_at IS NULL' : '';
     const [total] = await pool.query(`SELECT COUNT(*) as count FROM drivers ${base}`);
-    const [active] = await pool.query(`SELECT COUNT(*) as count FROM drivers WHERE status = "Approved"${mid}`);
-    const [suspended] = await pool.query(`SELECT COUNT(*) as count FROM drivers WHERE status = "Rejected"${mid}`);
-    const [expired] = await pool.query(`SELECT COUNT(*) as count FROM drivers WHERE status = "Pending"${mid}`);
+    const [approved] = await pool.query(`SELECT COUNT(*) as count FROM drivers WHERE status = "Approved"${mid}`);
+    const [rejected] = await pool.query(`SELECT COUNT(*) as count FROM drivers WHERE status = "Rejected"${mid}`);
+    const [pending] = await pool.query(`SELECT COUNT(*) as count FROM drivers WHERE status = "Pending"${mid}`);
 
     return {
       total: total[0].count,
-      active: active[0].count,
-      suspended: suspended[0].count,
-      expired: expired[0].count
+      approved: approved[0].count,
+      rejected: rejected[0].count,
+      pending: pending[0].count
     };
   }
 }
