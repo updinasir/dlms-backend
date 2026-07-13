@@ -51,7 +51,6 @@ router.get('/:id', auth, checkPermission('licenses', 'view'), licenseController.
 // Create license
 router.post('/', auth, authorize('admin', 'staff'), checkPermission('licenses', 'create'), [
   body('driver_id').notEmpty().withMessage('Driver ID is required'),
-  body('license_number').trim().notEmpty().withMessage('License number is required'),
   body('category_id').notEmpty().withMessage('Category is required'),
   body('issue_date').notEmpty().withMessage('Issue date is required'),
   body('expiry_date').notEmpty().withMessage('Expiry date is required')

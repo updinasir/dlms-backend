@@ -5,6 +5,33 @@ const notificationService = require('../services/notificationService');
 
 const safeSend = (opts) => notificationService.send(opts).catch((e) => console.error('send error:', e.message));
 
+// Generate a unique sequential license number: SL-000001, SL-000002, ...
+const generateLicenseNumber = async () => {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    // Find the highest existing SL-###### number and increment it
+    const [rows] = await pool.query(
+      `SELECT license_number FROM licenses
+       WHERE license_number REGEXP '^SL-[0-9]+$'
+       ORDER BY CAST(SUBSTRING(license_number, 4) AS UNSIGNED) DESC
+       LIMIT 1`
+    );
+    let next = 1;
+    if (rows.length > 0) {
+      next = parseInt(rows[0].license_number.slice(3), 10) + 1;
+    }
+    const candidate = `SL-${String(next).padStart(6, '0')}`;
+    const [existing] = await pool.query(
+      'SELECT license_id FROM licenses WHERE license_number = ? LIMIT 1',
+      [candidate]
+    );
+    if (existing.length === 0) {
+      return candidate;
+    }
+  }
+  // Fallback to a timestamp-based unique value if contention persists
+  return `SL-${Date.now()}`;
+};
+
 // Get all licenses
 const getAllLicenses = async (req, res) => {
   try {
@@ -48,14 +75,8 @@ const getLicenseById = async (req, res) => {
 // Create license
 const createLicense = async (req, res) => {
   try {
-    // Check for duplicate license number
-    const [existingLicense] = await pool.query(
-      'SELECT license_id FROM licenses WHERE license_number = ? LIMIT 1',
-      [req.body.license_number]
-    );
-    if (existingLicense.length > 0) {
-      return res.status(409).json({ message: 'A license with this number already exists' });
-    }
+    // License number is always auto-generated sequentially (SL-000001, ...)
+    const licenseNumber = await generateLicenseNumber();
 
     // Verify driver exists and is not deleted
     const [driverCheck] = await pool.query(
@@ -96,7 +117,7 @@ const createLicense = async (req, res) => {
     const licenseData = {
       driver_id: req.body.driver_id,
       category_id: req.body.category_id,
-      license_number: req.body.license_number,
+      license_number: licenseNumber,
       issue_date: req.body.issue_date,
       expiry_date: req.body.expiry_date,
       license_status: 'Pending',
