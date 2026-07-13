@@ -93,4 +93,7 @@ router.patch('/:id/print', auth, authorize('admin', 'staff'), checkPermission('l
 router.patch('/:id/ready-for-collection', auth, authorize('admin', 'staff'), checkPermission('licenses', 'edit'), licenseController.markLicenseReadyForCollection);
 router.patch('/:id/collect', auth, authorize('admin', 'staff'), checkPermission('licenses', 'edit'), licenseController.collectLicense);
 
+// Admin action: send a renewal/expiry notice (email + portal) to the driver
+router.post('/:id/send-expiry-notice', auth, authorize('admin'), checkPermission('licenses', 'edit'), licenseController.sendExpiryNoticeToDriver);
+
 module.exports = router;

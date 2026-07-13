@@ -111,47 +111,48 @@ const processAppointmentReminders = async () => {
   }
 };
 
-const sendLicenseExpiryReminder = async (license) => {
+// Notify super admins and admins that a driver's license is about to expire.
+// The admin can then send a renewal notice (email + portal) to the driver.
+const notifyAdminsOfExpiringLicense = async (license) => {
   const [driverRows] = await pool.query(
     'SELECT driver_id, first_name, last_name, email, phone FROM drivers WHERE driver_id = ? LIMIT 1',
     [license.driver_id]
   );
   const driver = driverRows[0];
-  if (!driver || !driver.email) return;
-
-  const name = `${driver.first_name || ''} ${driver.last_name || ''}`.trim() || 'Driver';
-
-  const [users] = await pool.query('SELECT user_id FROM users WHERE email = ? LIMIT 1', [driver.email]);
-  const userId = users[0]?.user_id || null;
+  const name = driver ? `${driver.first_name || ''} ${driver.last_name || ''}`.trim() || 'A driver' : 'A driver';
+  const expiryLabel = license.expiry_date ? new Date(license.expiry_date).toLocaleDateString() : 'N/A';
 
   await notificationService.send({
-    title: 'License Expiring Soon',
-    message: `Dear ${name}, your license ${license.license_number || ''} will expire on ${license.expiry_date ? new Date(license.expiry_date).toLocaleDateString() : 'N/A'}. Please renew it before the expiry date to avoid penalties.`,
+    title: 'License Expiring in 10 Days',
+    message: `${name}'s license ${license.license_number || ''} will expire on ${expiryLabel}. Please send a renewal notice to the driver.`,
     category: 'Warning',
     priority: 'High',
-    deliveryChannel: 'Both',
+    deliveryChannel: 'System',
     module: 'licenses',
-    eventKey: 'driver.license_expiry_reminder',
+    eventKey: 'admin.license_expiring',
+    recordId: license.license_id,
+    link: `/dashboard/licenses/${license.license_id}`,
     triggeredBy: null,
-    target: userId ? { userId, driverId: driver.driver_id } : { driverId: driver.driver_id }
+    target: { roles: ['super_admin', 'admin'] }
   });
 };
 
 const processLicenseExpiryReminders = async () => {
+  // Notify admins 10 days before a license expires (deduped by expiry_reminder_sent).
   const [licenses] = await pool.query(
     `SELECT * FROM licenses
      WHERE expiry_reminder_sent = 0
        AND license_status IN ('Active','Pending')
-       AND expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+       AND expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 10 DAY)
      ORDER BY expiry_date ASC`
   );
 
   for (const l of licenses) {
     try {
-      await sendLicenseExpiryReminder(l);
+      await notifyAdminsOfExpiringLicense(l);
       await pool.query('UPDATE licenses SET expiry_reminder_sent = 1 WHERE license_id = ?', [l.license_id]);
     } catch (err) {
-      console.error(`License expiry reminder failed for license ${l.license_id}:`, err.message);
+      console.error(`License expiry admin notification failed for license ${l.license_id}:`, err.message);
     }
   }
 };

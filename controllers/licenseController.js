@@ -458,6 +458,51 @@ const collectLicense = async (req, res) => {
   }
 };
 
+// Admin action: send a license renewal/expiry notice to the driver
+// (both email and in-app portal notification).
+const sendExpiryNoticeToDriver = async (req, res) => {
+  try {
+    const license = await License.findById(req.params.id);
+    if (!license) return res.status(404).json({ message: 'License not found' });
+
+    const [driverRows] = await pool.query(
+      'SELECT driver_id, first_name, last_name, email FROM drivers WHERE driver_id = ? LIMIT 1',
+      [license.driver_id]
+    );
+    const driver = driverRows[0];
+    if (!driver) return res.status(404).json({ message: 'Driver not found for this license' });
+    if (!driver.email) return res.status(400).json({ message: 'Driver has no email on file' });
+
+    const name = `${driver.first_name || ''} ${driver.last_name || ''}`.trim() || 'Driver';
+    const expiryLabel = license.expiry_date ? new Date(license.expiry_date).toLocaleDateString() : 'N/A';
+
+    // Optional custom message from the admin, otherwise a default notice.
+    const customMessage = (req.body && req.body.message) ? String(req.body.message).trim() : '';
+    const message = customMessage ||
+      `Dear ${name}, your driving license ${license.license_number || ''} will expire on ${expiryLabel}. Please visit the licensing office to renew it before the expiry date to avoid penalties.`;
+
+    // Sends to the driver's linked user account (portal) and email.
+    await notificationService.send({
+      title: 'License Renewal Notice',
+      message,
+      category: 'Warning',
+      priority: 'High',
+      deliveryChannel: 'Both',
+      module: 'licenses',
+      eventKey: 'driver.license_expiry_reminder',
+      recordId: license.license_id,
+      link: '/dashboard/licenses',
+      triggeredBy: req.user?.id || null,
+      target: { driverId: driver.driver_id }
+    });
+
+    res.json({ message: `Renewal notice sent to ${driver.email} and the driver's portal.` });
+  } catch (error) {
+    console.error('Send expiry notice error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Verify license
 const verifyLicense = async (req, res) => {
   try {
@@ -795,6 +840,7 @@ module.exports = {
   printLicense,
   markLicenseReadyForCollection,
   collectLicense,
+  sendExpiryNoticeToDriver,
   verifyLicense,
   searchLicenseByNationalId,
   getLicenseStatistics,
