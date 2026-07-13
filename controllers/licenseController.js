@@ -5,7 +5,7 @@ const notificationService = require('../services/notificationService');
 
 const safeSend = (opts) => notificationService.send(opts).catch((e) => console.error('send error:', e.message));
 
-// Generate a unique sequential license number: SL-000001, SL-000002, ...
+// Generate a unique sequential license number: SL-000001, SL-000002, ..., SL-1000000, SL-1000001, ...
 const generateLicenseNumber = async () => {
   for (let attempt = 0; attempt < 10; attempt++) {
     // Find the highest existing SL-###### number and increment it
@@ -20,6 +20,7 @@ const generateLicenseNumber = async () => {
     if (rows.length > 0) {
       next = parseInt(rows[0].license_number.slice(3), 10) + 1;
     }
+    // Format: SL- followed by the number with at least 6 digits (leading zeros), continues indefinitely
     const candidate = `SL-${String(next).padStart(6, '0')}`;
     const [existing] = await pool.query(
       'SELECT license_id FROM licenses WHERE license_number = ? LIMIT 1',
