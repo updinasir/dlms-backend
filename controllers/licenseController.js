@@ -676,30 +676,30 @@ const getDriverExamStatus = async (req, res) => {
   try {
     const driverId = req.params.driverId;
     
-    // Check theory exam status
+    // Theory exams are stored in the theory_exams table
     const [theoryExams] = await pool.query(`
       SELECT COUNT(*) as total, 
              SUM(CASE WHEN result = 'Pass' THEN 1 ELSE 0 END) as passed
-      FROM exams 
-      WHERE driver_id = ? AND exam_type = 'Theory' AND deleted_at IS NULL
+      FROM theory_exams 
+      WHERE driver_id = ?
     `, [driverId]);
     
-    // Check practical exam status
+    // Practical exams are stored in the practical_exams table
     const [practicalExams] = await pool.query(`
       SELECT COUNT(*) as total, 
              SUM(CASE WHEN result = 'Pass' THEN 1 ELSE 0 END) as passed
-      FROM exams 
-      WHERE driver_id = ? AND exam_type = 'Practical' AND deleted_at IS NULL
+      FROM practical_exams 
+      WHERE driver_id = ?
     `, [driverId]);
     
-    const theory_passed = theoryExams[0].passed > 0;
-    const practical_passed = practicalExams[0].passed > 0;
+    const theory_passed = Number(theoryExams[0].passed) > 0;
+    const practical_passed = Number(practicalExams[0].passed) > 0;
     
     res.json({
       theory_passed,
       practical_passed,
-      theory_total: theoryExams[0].total,
-      practical_total: practicalExams[0].total
+      theory_total: Number(theoryExams[0].total) || 0,
+      practical_total: Number(practicalExams[0].total) || 0
     });
   } catch (error) {
     console.error('Get driver exam status error:', error);
