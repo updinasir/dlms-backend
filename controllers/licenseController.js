@@ -9,9 +9,10 @@ const safeSend = (opts) => notificationService.send(opts).catch((e) => console.e
 const generateLicenseNumber = async () => {
   for (let attempt = 0; attempt < 10; attempt++) {
     // Find the highest existing SL-###### number and increment it
+    // Use LIKE instead of REGEXP for TiDB compatibility
     const [rows] = await pool.query(
       `SELECT license_number FROM licenses
-       WHERE license_number REGEXP '^SL-[0-9]+$'
+       WHERE license_number LIKE 'SL-%'
        ORDER BY CAST(SUBSTRING(license_number, 4) AS UNSIGNED) DESC
        LIMIT 1`
     );
