@@ -213,6 +213,7 @@ class Payment {
     const [total] = await pool.query(`SELECT COUNT(*) as count FROM payments p LEFT JOIN drivers d ON p.driver_id = d.driver_id ${dFilter ? dFilter.replace('AND','WHERE') : ''}`);
     const [completed] = await pool.query(`SELECT COUNT(*) as count FROM payments p LEFT JOIN drivers d ON p.driver_id = d.driver_id WHERE p.payment_status = "Completed" ${dFilter}`);
     const [pending] = await pool.query(`SELECT COUNT(*) as count FROM payments p LEFT JOIN drivers d ON p.driver_id = d.driver_id WHERE p.payment_status = "Pending" ${dFilter}`);
+    const [failed] = await pool.query(`SELECT COUNT(*) as count FROM payments p LEFT JOIN drivers d ON p.driver_id = d.driver_id WHERE p.payment_status = "Failed" ${dFilter}`);
     const [revenue] = await pool.query(`SELECT COALESCE(SUM(p.amount), 0) as total FROM payments p LEFT JOIN drivers d ON p.driver_id = d.driver_id WHERE p.payment_status = "Completed" ${dFilter}`);
 
     const today = new Date().toISOString().split('T')[0];
@@ -225,6 +226,8 @@ class Payment {
       total: total[0].count,
       completed: completed[0].count,
       pending: pending[0].count,
+      failed: failed[0].count,
+      total_amount: revenue[0].total,
       revenue: revenue[0].total,
       today_revenue: todayRevenue[0].total,
       total_transactions: total[0].count
